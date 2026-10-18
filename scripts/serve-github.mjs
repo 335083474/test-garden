@@ -1,0 +1,6 @@
+import http from 'node:http';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'../dist-github'),base='/test-garden/',port=Number(process.env.PORT||4326);
+const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.xml':'application/xml','.txt':'text/plain; charset=utf-8'};
+http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://127.0.0.1');if(!u.pathname.startsWith(base)){res.writeHead(404);res.end('Not found');return;}const relative=decodeURIComponent(u.pathname.slice(base.length)),file=path.resolve(root,relative,u.pathname.endsWith('/')?'index.html':'');if(!file.startsWith(root+path.sep))throw Error();let body,status=200;try{body=await fs.readFile(file);}catch{body=await fs.readFile(path.join(root,'404.html'));status=404;}res.writeHead(status,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(body);}catch{res.writeHead(400);res.end('Invalid path');}}).listen(port,'127.0.0.1',()=>console.log(`Local: http://127.0.0.1:${port}${base}`));

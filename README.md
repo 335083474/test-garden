@@ -2,19 +2,21 @@
 
 中文默认、支持 English 的综合测试网站，采用「角色乐园③」设计。
 
-- **GitHub 试用入口：** https://335083474.github.io/test-garden/
-- **完整应用：** https://test-garden-first-edition.liuq75061.chatgpt.site/
-- **English：** https://test-garden-first-edition.liuq75061.chatgpt.site/en/
+- **网站（GitHub Pages）：** https://335083474.github.io/test-garden/
+- **English：** https://335083474.github.io/test-garden/en/
 
-GitHub Pages 发布 `main` 分支的 `/docs`，打开后自动进入完整应用。深层测试、双人邀请链接及查询参数、片段一并转到相同正式站点。GitHub Pages 本身不运行后端；MiniMax、D1 数据库、分享和身份校验仍由现有 Sites / Cloudflare Worker 提供。不要把 Worker 构建产物当作静态网站部署。
+页面与静态文件实际运行在 GitHub Pages，地址保持在 `github.io`，不跳转或连接 ChatGPT 托管。`main` 推送后由 `.github/workflows/pages.yml` 检查、构建并自动发布 `dist-github/`。
 
 ## 当前功能
 
-- AI 最多追问两次明确需求，提供三个选项；只引用目录中的现有测试与外链，或生成新测试。
-- 五个编辑测试、三个站外活动、持久保存的 AI 双语新测试；完成计数和排行榜。
-- 结果卡、二维码、分享测试和双人对比，关联推荐按深入探索、互补维度、朋友共玩组织。
-- 可选择保存需求以改善推荐；站点所有者独享需求与反馈分析。
-- 已编辑页面提供 SEO / GEO 内容、语言映射和结构化数据；未审核的 AI 新测试保持 noindex。
+- 五个原创编辑测试、三个站外活动，中文默认 / English，包含朋友合集与搜索。
+- 浏览器计分、结果卡、二维码、可选择包含结果摘要的分享链接；朋友直接打开同一个 GitHub 测试。
+- “帮我选测试”进行中英文目录关键词匹配；明确标识为目录匹配，不冒充 AI。
+- 按主题关联的编辑推荐，并避开本浏览器已完成或反馈不合适的测试。
+- 只保存本设备的完成记录与主动反馈，不保存搜索需求、对话或原始答案。计数明确标记为本设备记录，不是全站排行榜。
+- 24 个中英文内容页面、独立标题 / 描述、canonical、hreflang、结构化数据与 sitemap；另有两种语言的 404 页面。
+
+**尚待接入独立后端：** 真正 AI 追问 / 生成测试、AI 新作持久目录、需求研究与管理分析、全站排行、双人邀请汇总。GitHub Pages 不能运行密钥和数据库服务；当前版本不向原 ChatGPT 站点请求这些服务。需要独立服务器或 Cloudflare Worker / D1 配置。
 
 ## 开发与验证
 
@@ -23,11 +25,14 @@ GitHub Pages 发布 `main` 分支的 `/docs`，打开后自动进入完整应用
 ```sh
 npm ci
 npm test
-node scripts/check-content.mjs
-npm run build
+npm run build:github
+node scripts/check-github.mjs
+node scripts/serve-github.mjs
 ```
 
-构建输出是 Cloudflare Worker ESM：`dist/server/index.js`，需要 D1 绑定 `DB` 及数据库迁移；它不是 GitHub Pages 的静态产物。线上配置与权限边界见 [HOSTED_STUDIO.md](HOSTED_STUDIO.md)。
+本地预览：`http://127.0.0.1:4326/test-garden/`。静态输出为 `dist-github/`，仓库子路径、分享 URL、图片与语言切换均保留 `/test-garden/`。CI 运行 60 项自动测试，并验证页面链接、结构化数据及不包含旧站跳转。
+
+保留的 `npm run build` 是旧 Worker 构建，需要 D1 绑定 `DB` 与迁移，不能直接放进 Pages。旧服务设计见 [HOSTED_STUDIO.md](HOSTED_STUDIO.md)，其中的已上线功能不代表当前 GitHub 静态版已接入。
 
 内部本地试用见 [INTERNAL_STUDIO.md](INTERNAL_STUDIO.md)。`npm run start:plan` 仅绑定回环地址，并使用本机已登录的官方 Codex CLI 额度，不是生产托管方案。
 
@@ -35,8 +40,8 @@ npm run build
 
 本仓库从已验证的当前源代码快照初始化，未包含旧 Git 历史、本机数据库、需求原文、运行日志、构建产物或凭据。应用源版本：`261d5de13e05c78dd20f1894a8fbfa7d58a77396`；GitHub 发布准备日期：2026-10-18。
 
-Pages 自动发布只更新试用入口；修改运行中的应用仍须执行 Sites 的构建、源代码同步、保存版本和发布流程。修改 `docs/redirect.js`、`docs/index.html`、`docs/404.html` 时需同步正式应用地址。
+本次移除 `/docs` 跳转页，Pages 来源改为 GitHub Actions 的静态构建产物。完整本地 GitHub 工作区为 `D:\SEA\test-garden-github`。源码修改推送 `main` 后自动构建发布；以 Actions 的成功部署和公开页面实际读回为准。
 
-MiniMax 密钥只存在服务端秘密配置中。不要把密钥写入源码、GitHub Pages 或浏览器。当前全站 AI 限额为每天 50 次，另有每位访客限额；现有测试不消耗 AI 请求额度。
+当前 GitHub 页面没有 AI 密钥，也不会消耗 MiniMax 或 Codex 额度。后续密钥只可配置在独立后端，不可写入源码、Pages 或浏览器。
 
 测试用于娱乐和自我探索，未经过心理测量验证。

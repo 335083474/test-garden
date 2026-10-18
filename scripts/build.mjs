@@ -15,7 +15,7 @@ await fs.writeFile(path.join(out,'assets/qrcode-LICENSE.txt'),(await fs.readFile
 for(const p of outputPages){const dir=path.join(out,p.path);await fs.mkdir(dir,{recursive:true});await fs.writeFile(path.join(dir,'index.html'),p.html);}
 await fs.writeFile(path.join(out,'404.html'),notFound());
 await fs.writeFile(path.join(out,'en/404.html'),notFound('en'));
-for(const name of ['styles.css','studio.css','studio.mjs','studio-ui.mjs','studio-advanced.mjs','studio-advanced-ui.mjs','app.mjs','engine.mjs','art.mjs','recommender.mjs'])await fs.copyFile(path.join(root,'src',name),path.join(out,'assets',name));
+for(const name of ['styles.css','studio.css','site-path.mjs','github-directory.mjs','studio.mjs','studio-ui.mjs','studio-advanced.mjs','studio-advanced-ui.mjs','app.mjs','engine.mjs','art.mjs','recommender.mjs'])await fs.copyFile(path.join(root,'src',name),path.join(out,'assets',name));
 for(const name of ['quizzes.mjs','catalog.mjs','fun-quizzes.mjs'])await fs.copyFile(path.join(root,'src/data',name),path.join(out,'assets/data',name));
 for(const name of ['ui.mjs','zh.mjs','content.mjs','guide.mjs'])await fs.copyFile(path.join(root,'src/i18n',name),path.join(out,'assets/i18n',name));
 await fs.writeFile(path.join(out,'assets/brand.svg'),flower.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" style="color:#193e31" '));

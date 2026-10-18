@@ -1,3 +1,4 @@
+import {sitePath} from '../site-path.mjs';
 export const messages={
  en:{
   categoryFun:'Just for fun',funEyebrow:'Let your imagination wander',funHeading:'A different life. A little adventure.',funCopy:'A fictional past life, an ancient-town adventure. Take a playful detour with friends.',fictionBadge:'Fictional entertainment',funStrengths:'In your character’s story',funStretch:'A charming little flaw',funPractice:'Give your story another page',funStart:'Follow the answer that makes you curious. There are no right answers; enjoy the imaginary adventure.',funDimensions:'Your four possible story roles: {dimensions}. Choose the option you would most enjoy in this imaginary world.',
@@ -38,7 +39,7 @@ export const messages={
 export const locales=['zh','en'];
 export const defaultLocale='zh';
 export const languageTag=locale=>locale==='zh'?'zh-Hans':locale;
-export const route=(locale,path='/')=>locale===defaultLocale?path:`/${locale}${path}`;
+export const route=(locale,path='/')=>sitePath(locale===defaultLocale?path:`/${locale}${path}`);
 export const text=(locale,key,vars={})=>{
  const value=messages[locale]?.[key];
  if(typeof value!=='string')throw new Error(`Missing ${locale} translation: ${key}`);

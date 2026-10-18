@@ -11,7 +11,8 @@
     "test:plan": "node scripts/test-plan.mjs",
     "test:studio:real": "node scripts/test-studio-plan.mjs",
     "test:studio:http": "node scripts/test-studio-http.mjs",
-    "db:generate": "drizzle-kit generate --config=drizzle.config.mjs"
+    "db:generate": "drizzle-kit generate --config=drizzle.config.mjs",
+    "build:github": "node scripts/build-github.mjs"
   },
   "dependencies": {
     "jsonrepair": "3.15.0",

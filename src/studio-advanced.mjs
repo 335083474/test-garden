@@ -1,9 +1,13 @@
 import {escapeHtml as e} from './engine.mjs';
 import {studioApi,offerMarkup,bindOffers} from './studio.mjs';
+import {githubMode} from './site-path.mjs';
 const en=document.documentElement.lang==='en',locale=en?'en':'zh',s=(zh,english)=>en?english:zh;
 const tokenFromPage=()=>location.pathname.match(/\/compare\/([a-f0-9]{64})\//)?.[1];
 const showError=(target,error)=>{target.textContent=({comparison_limit:s('你今天创建的邀请已达上限，可以继续使用已有邀请。','Today’s invitation limit is reached. Use an existing invitation.'),admin_required:s('此页面只允许站点管理者访问。','This page is restricted to the site owner.'),comparison_full:s('这个邀请已经有两位参与者，请新建一个邀请。','This invitation already has two participants. Create a new one.'),comparison_same_browser:s('这是你发起的邀请。请让朋友在另一个浏览器或设备完成测试。','This is your invitation. Have your friend use another browser or device.'),comparison_unavailable:s('邀请已撤销或过期。','This invitation was revoked or expired.'),comparison_not_found:s('找不到这个邀请，可能已过期或被删除。','This invitation was not found. It may have expired or been deleted.')})[error.code]||s('暂时没有完成，请重试。','That did not complete. Please retry.');};
 export function attachPairExperience({stage,quiz,result,answers}){
+ if(githubMode()){
+  const box=document.createElement('section');box.className='studio-pair-invite';box.innerHTML=`<h3>${s('邀请朋友也测一测','Invite a friend to try')}</h3><p>${s('上方分享链接会直接打开同一个 GitHub 测试。双方汇总对比需要独立后端，目前尚未接通。','The share link above opens the same quiz on GitHub. A shared two-person comparison requires an independent backend, which is not connected yet.')}</p>`;stage.querySelector('.studio-share').after(box);return;
+ }
  const token=new URLSearchParams(location.search).get('compare'),box=document.createElement('section');box.className='studio-pair-invite';
  box.innerHTML=`<h3>${token?s('把两份故事放在一起','Bring both stories together'):s('邀请一个朋友，看看你们的不同','Invite a friend and compare your stories')}</h3><p>${s('仅保存角色和选择分布，不保存原始答案。持链接者可看双人摘要；邀请7天过期，发起者可撤销。','Only role names and score distributions are saved, never individual answers. Link holders can see the comparison. Invitations expire after 7 days and can be revoked by the creator.')}</p><label><input type="checkbox" data-pair-consent> ${s('我同意将这次结果用于双人对比','I agree to share this result for the comparison')}</label><button class="button" data-pair-action disabled>${token?s('提交结果，查看双人对比','Share my result and compare'):s('创建双人邀请','Create an invitation')} ↗</button><p role="status" data-pair-action-status></p><div data-pair-action-output></div>`;
  stage.querySelector('.studio-share').after(box);

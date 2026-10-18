@@ -1,8 +1,10 @@
 import {escapeHtml as e} from './engine.mjs';
 import {attachPairExperience,mountAdvanced} from './studio-advanced.mjs';
-const locale=document.documentElement.lang.startsWith('zh')?'zh':'en',en=locale==='en',s=(zh,english)=>en?english:zh,hosted=document.body.dataset.runtime==='hosted';
+import {sitePath,githubMode} from './site-path.mjs';
+const locale=document.documentElement.lang.startsWith('zh')?'zh':'en',en=locale==='en',s=(zh,english)=>en?english:zh,hosted=['hosted','github'].includes(document.body.dataset.runtime);
 const errorText=error=>({ai_daily_limit:s('今天的 AI 使用次数已达上限，明天再来试试。已有测试仍然可以做。','Today’s AI limit has been reached. Existing quizzes are still available.'),ai_busy:s('AI 暂时繁忙，请稍后重试。','AI is busy. Please try again shortly.'),ai_unavailable:s('暂时未能连接 AI，请重试。','The AI connection failed. Please retry.'),local_test_busy:s('当前账号正在处理另一个请求，请稍后再试。','The account is processing another request. Please try again shortly.'),conversation_expired:s('这段对话已过期，请重新开始。','This conversation expired. Please start again.'),plan_limit:s('当前账号的 Codex 额度暂时不足，请稍后再试。','The signed-in account has reached its Codex usage limit. Try later.'),plan_login_required:s('请先在本机 Codex 登录 ChatGPT。','Sign in to ChatGPT in the local Codex app first.'),plan_network_error:s('连接 AI 服务失败，请稍后重试。','The AI connection failed. Please try again.'),version_changed:s('测试版本已更新，请刷新后重新作答。','This quiz version changed. Refresh and take it again.')})[error.code]||s('这次没有完成，请重试。不会用预设答案冒充 AI 回复。','That did not complete. Please retry. No canned AI response is substituted.');
 export async function studioApi(action,input={},signal){
+ if(githubMode())return (await import('./github-directory.mjs')).directoryApi(action,input);
  const response=await fetch('/api/studio/'+action,{method:'POST',headers:{'Content-Type':'application/json',Accept:hosted?'text/event-stream':'application/json'},cache:'no-store',body:JSON.stringify({locale,...input}),signal});
  if(response.headers.get('content-type')?.includes('text/event-stream')){
   const reader=response.body.getReader(),decoder=new TextDecoder();let pending='',result;
@@ -12,7 +14,7 @@ export async function studioApi(action,input={},signal){
  let data;try{data=await response.json();}catch{throw Object.assign(Error('studio_unavailable'),{code:'studio_unavailable'});}
  if(!response.ok)throw Object.assign(Error(data.error),{code:data.error});return data;
 }
-const thumbnail=id=>id==='historical-character'?'/assets/ancient.jpg':['bestiescore','skribbl','gartic-phone','communication-style','work-style'].includes(id)?'/assets/friends.jpg':'/assets/garden.webp';
+const thumbnail=id=>sitePath(id==='historical-character'?'/assets/ancient.jpg':['bestiescore','skribbl','gartic-phone','communication-style','work-style'].includes(id)?'/assets/friends.jpg':'/assets/garden.webp');
 export function offerMarkup(choices,axes){return choices.map((c,i)=>`<article class="studio-offer"><span>${e(axes?.[i]||`${String(i+1).padStart(2,'0')} / ${c.kind==='existing'?s('已有测试或活动','In the library'):s('为你生成','Create for you')}`)}</span><h3>${e(c.title)}</h3><p>${e(c.description)}</p><p class="studio-reason">${e(c.reason)}</p><button type="button" class="button" data-offer-index="${i}">${c.kind==='existing'?s('就选这个','Choose this'):s('生成这个测试','Create this quiz')} ↗</button></article>`).join('');}
 const offerBindings=new WeakMap();
 export function bindOffers(container,response,status){
@@ -22,7 +24,7 @@ export function bindOffers(container,response,status){
   const buttons=[...container.querySelectorAll('button')];buttons.forEach(x=>x.disabled=true);
   const originalText=button.textContent;button.textContent=s('正在准备…','Getting it ready…');
   let localStatus=button.parentElement.querySelector('[data-offer-status]');if(!localStatus){localStatus=document.createElement('p');localStatus.dataset.offerStatus='';localStatus.setAttribute('role','status');button.after(localStatus);}
-  localStatus.textContent=status.textContent=s('正在准备，生成新测试通常需要 1–3 分钟…','Getting it ready. Creating a new quiz usually takes 1–3 minutes…');
+  localStatus.textContent=status.textContent=githubMode()?s('正在打开目录中的内容…','Opening this directory entry…'):s('正在准备，生成新测试通常需要 1–3 分钟…','Getting it ready. Creating a new quiz usually takes 1–3 minutes…');
    try{const result=await studioApi('select',{conversationId:response.conversationId,index:Number(button.dataset.offerIndex)});if(result.declined){localStatus.textContent=status.textContent=result.message;return;}location.assign(result.url);}
   catch(error){localStatus.textContent=status.textContent=errorText(error);}finally{buttons.forEach(x=>x.disabled=false);button.textContent=originalText;}
  };offerBindings.set(container,listener);container.addEventListener('click',listener);
@@ -33,10 +35,10 @@ function mountChooser(){
  const conversation=document.querySelector('[data-studio-conversation]'),transcript=conversation.querySelector('[data-studio-transcript]'),question=conversation.querySelector('[data-studio-question]');
  let offers=conversation.querySelector('[data-studio-offers]'),conversationId=null,busy=false,controller=null;
  const toggle=value=>{busy=value;root.setAttribute('aria-busy',String(value));for(const b of root.querySelectorAll('button'))if(b!==reset)b.disabled=value;for(const b of question.querySelectorAll('button,input'))b.disabled=value;form.querySelector('[type=submit]').textContent=value?s('正在想…','Thinking…'):s('帮我找找 ↗','Find my quiz ↗');};
- const bubble=(role,text)=>{const p=document.createElement('p');p.className='studio-message '+role;const name=document.createElement('small');name.textContent=role==='user'?s('你的好奇','YOUR CURIOSITY'):'TEST GARDEN · AI';p.append(name,document.createTextNode(text));transcript.append(p);};
+ const bubble=(role,text)=>{const p=document.createElement('p');p.className='studio-message '+role;const name=document.createElement('small');name.textContent=role==='user'?s('你的好奇','YOUR CURIOSITY'):githubMode()?s('现有目录匹配','DIRECTORY MATCH'):'TEST GARDEN · AI';p.append(name,document.createTextNode(text));transcript.append(p);};
  async function send(message){
   if(busy||!message.trim())return;
-  controller=new AbortController();toggle(true);status.textContent=s('AI 正在理解你的想法…','AI is considering your request…');
+  controller=new AbortController();toggle(true);status.textContent=githubMode()?s('正在查找现有目录…','Searching the existing directory…'):s('AI 正在理解你的想法…','AI is considering your request…');
   conversation.hidden=false;reset.hidden=false;offers.innerHTML='';
   try{
    const response=await studioApi('chat',{message,conversationId,consent:form.elements.consent.checked},controller.signal);
@@ -48,7 +50,7 @@ function mountChooser(){
    if(response.action==='offer'){
     const fresh=offers.cloneNode(false);offers.replaceWith(fresh);offers=fresh;offers.innerHTML=offerMarkup(response.choices);bindOffers(offers,response,status);
    }
-   status.textContent=response.action==='ask'?s(`先确认这一点 · 第 ${response.questionsAsked}/2 个问题`,`One quick detail · Question ${response.questionsAsked}/2`):s('AI 回复已显示在下方。','The AI response is shown below.');
+   status.textContent=githubMode()?s('目录匹配结果已显示在下方。','Directory matches are shown below.'):response.action==='ask'?s(`先确认这一点 · 第 ${response.questionsAsked}/2 个问题`,`One quick detail · Question ${response.questionsAsked}/2`):s('AI 回复已显示在下方。','The AI response is shown below.');
    conversation.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(error){if(error.name!=='AbortError')status.textContent=errorText(error);}
   finally{toggle(false);}
@@ -62,8 +64,8 @@ async function mountLibrary(root){
  function draw(){
   const counts=new Map(data.counts.map(x=>[x.id,x]));let list=data.entries.filter(x=>(sort!=='new'||x.generated)&&(!filter||[x.title,x.summary,...x.tags].join(' ').toLowerCase().includes(filter)));
   list.sort((a,b)=>sort==='new'?(b.createdAt||0)-(a.createdAt||0):sort==='all'?0:(counts.get(b.id)?.[sort]||0)-(counts.get(a.id)?.[sort]||0));
-  status.textContent=list.length?'':s('还没有符合条件的测试。说说你的想法，让 AI 帮你创建。','No matching quizzes yet. Tell AI what you would like to create.');
-  grid.innerHTML=list.map((x,i)=>{const count=counts.get(x.id);return `<article class="studio-library-card"><a href="${e(x.url)}" ${x.type==='external'?'target="_blank" rel="noopener noreferrer"':''}><img src="${thumbnail(x.id)}" alt="" loading="lazy"></a><div><small>${x.type==='external'?s('朋友与外链','WITH FRIENDS · EXTERNAL'):x.generated?s('AI 新作 · 8 道题','AI CREATED · 8 QUESTIONS'):s('花园原创 · 12 道题','GARDEN ORIGINAL · 12 QUESTIONS')}</small><h3><a href="${e(x.url)}" ${x.type==='external'?'target="_blank" rel="noopener noreferrer"':''}>${e(x.title)}</a></h3><p>${e(x.summary)}</p><div class="studio-card-foot"><span>${x.type==='external'?s('站外活动 · 未统计完成','External · completion not tracked'):s(`${count?.[sort==='week'?'week':'total']||0} 人完成${sort==='week'?' · 近7天':''}`,`${count?.[sort==='week'?'week':'total']||0} completions${sort==='week'?' · 7 days':''}`)}</span><a href="${e(x.url)}" ${x.type==='external'?'target="_blank" rel="noopener noreferrer"':''}>${s('开始探索','Explore')} ↗</a></div></div></article>`;}).join('');
+  status.textContent=list.length?'':githubMode()?s('还没有符合条件的测试，试试其他主题。AI 生成等待独立后端接入。','No matching quizzes yet. Try another topic. AI creation awaits an independent backend.'):s('还没有符合条件的测试。说说你的想法，让 AI 帮你创建。','No matching quizzes yet. Tell AI what you would like to create.');
+  grid.innerHTML=list.map((x,i)=>{const count=counts.get(x.id);return `<article class="studio-library-card"><a href="${e(x.url)}" ${x.type==='external'?'target="_blank" rel="noopener noreferrer"':''}><img src="${thumbnail(x.id)}" alt="" loading="lazy"></a><div><small>${x.type==='external'?s('朋友与外链','WITH FRIENDS · EXTERNAL'):x.generated?s('AI 新作 · 8 道题','AI CREATED · 8 QUESTIONS'):s('花园原创 · 12 道题','GARDEN ORIGINAL · 12 QUESTIONS')}</small><h3><a href="${e(x.url)}" ${x.type==='external'?'target="_blank" rel="noopener noreferrer"':''}>${e(x.title)}</a></h3><p>${e(x.summary)}</p><div class="studio-card-foot"><span>${x.type==='external'?s('站外活动 · 未统计完成','External · completion not tracked'):s(`${count?.[sort==='week'?'week':'total']||0} ${githubMode()?'次本设备记录':'人完成'}${sort==='week'?' · 近7天':''}`,`${count?.[sort==='week'?'week':'total']||0} ${githubMode()?'device completions':'completions'}${sort==='week'?' · 7 days':''}`)}</span><a href="${e(x.url)}" ${x.type==='external'?'target="_blank" rel="noopener noreferrer"':''}>${s('开始探索','Explore')} ↗</a></div></div></article>`;}).join('');
  }
  try{data=await studioApi('catalog');draw();}catch{status.textContent=hosted?s('测试库暂时无法打开，请刷新重试。','The library is temporarily unavailable. Refresh to retry.'):s('测试库需要本地内部测试服务。请用 npm run start:plan 启动。','The library requires the internal local test server (npm run start:plan).');return;}
  root.querySelectorAll('[data-studio-sort]').forEach(b=>b.addEventListener('click',()=>{sort=b.dataset.studioSort;root.querySelectorAll('[data-studio-sort]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));draw();}));
@@ -71,7 +73,7 @@ async function mountLibrary(root){
 }
 export function recordQuizStart(quiz){sessionStorage.setItem('garden-start-'+quiz.id,String(Date.now()));void studioApi('start',{quizId:quiz.id,version:quiz.version,comparisonToken:new URLSearchParams(location.search).get('compare')||undefined}).catch(()=>{});}
 export function quizShareUrl(quiz,result,includeResult=false){
- const path=quiz.generated?`/created/${quiz.id}/`:`/tests/${quiz.id}/`,url=new URL((en?'/en':'')+path,location.origin);url.searchParams.set('v',quiz.version);
+ const path=quiz.generated?`/created/${quiz.id}/`:`/tests/${quiz.id}/`,url=new URL(sitePath((en?'/en':'')+path),location.origin);url.searchParams.set('v',quiz.version);
  if(includeResult&&result)url.hash='result='+encodeURIComponent(result.leaders.join(','))+'&version='+encodeURIComponent(quiz.version);return url.href;
 }
 export function qrSvgMarkup(url){
