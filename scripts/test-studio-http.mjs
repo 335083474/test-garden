@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+const origin='http://127.0.0.1:4319';
+const checks=[];
+const request=async(path,options={})=>fetch(origin+path,options);
+const post=(action,body={},headers={})=>request('/api/studio/'+action,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...headers},body:JSON.stringify({locale:'zh',...body})});
+const home=await request('/');assert.equal(home.status,200);assert((await home.text()).includes('data-studio-form'));checks.push('Recognizable homepage returns 200');
+for(const [asset,type] of [['garden.webp','image/webp'],['qrcode.js','text/javascript'],['studio.mjs','text/javascript'],['studio.css','text/css']]){const r=await request('/assets/'+asset);assert.equal(r.status,200);assert(r.headers.get('content-type').startsWith(type));}checks.push('Images, QR library and app modules served with correct types');
+assert.equal((await request('/api/studio/catalog')).status,405);assert.equal((await post('catalog',{}, {Origin:'https://example.invalid'})).status,403);checks.push('Read methods and cross-origin writes rejected');
+const cat=await post('catalog');assert.equal(cat.status,200);assert.match(cat.headers.get('set-cookie')||'',/HttpOnly; SameSite=Strict/);const data=await cat.json();assert(data.entries.some(x=>x.generated));checks.push('Session cookie is HttpOnly and SameSite Strict; generated content is cataloged');
+const entry=data.entries.find(x=>x.generated);
+for(const path of [entry.url,'/en'+entry.url]){const r=await request(path);assert.equal(r.status,200);const html=await r.text();assert(html.includes('id="generated-quiz"'));assert(html.includes('noindex, nofollow'));assert(html.includes('AI'));}checks.push('Created quiz has Chinese/English pages and noindex until editorial review');
+assert.equal((await post('complete',{quizId:entry.id,version:'1.0.0',answers:[]})).status,400);checks.push('Incomplete attempts cannot increment counts');
+const report={passed:true,checks};await fs.mkdir('artifacts/studio-ui',{recursive:true});await fs.writeFile('artifacts/studio-ui/http-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

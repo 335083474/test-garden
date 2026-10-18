@@ -1,0 +1,12 @@
+dist/
+artifacts/
+.DS_Store
+node_modules/
+.openai/*.local.*
+*.log
+
+.env
+.env.local
+.dev.vars
+
+.local-data/

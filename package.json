@@ -1,0 +1,25 @@
+{
+  "name": "test-garden",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "start": "node scripts/serve.mjs",
+    "start:plan": "node scripts/serve-plan.mjs",
+    "test:plan": "node scripts/test-plan.mjs",
+    "test:studio:real": "node scripts/test-studio-plan.mjs",
+    "test:studio:http": "node scripts/test-studio-http.mjs",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.mjs"
+  },
+  "dependencies": {
+    "jsonrepair": "3.15.0",
+    "qrcode-generator": "1.4.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.11",
+    "drizzle-orm": "0.45.4",
+    "esbuild": "0.28.2"
+  }
+}

@@ -1,0 +1,25 @@
+import {quizzes} from './quizzes.mjs';
+export const externalEntries=[
+ {id:'bestiescore',type:'external',timing:'shared',title:'Who knows you best?',provider:'BestieScore',category:'With friends',color:'lilac',art:'friends',
+  summary:'Make a five-question quiz about yourself and let friends guess. The provider describes a shared link and leaderboard.',
+  url:'https://bestiescore.com/quizzes',tags:['Guess together','Friendship'],mode:'together',players:'2+',duration:null,
+  freeScope:'Provider describes free browser play.',login:'Provider says no app install is needed; account requirements have not been tested.',
+  checkedAt:'2026-10-15',verification:'public_page_review',sourceUrl:'https://bestiescore.com/quizzes',relationship:'none',
+  discussion:'Try one round each, then talk about the answer that surprised you most.'},
+ {id:'skribbl',type:'external',timing:'live',title:'A drawing-and-guessing break',provider:'skribbl.io',category:'With friends',color:'peach',art:'drawing',
+  summary:'A live drawing and guessing game. Use a private room for a round with your own group.',url:'https://skribbl.io/',
+  tags:['Live group game','Drawing'],mode:'together',players:'2+',duration:null,freeScope:'Provider describes a free multiplayer game.',
+  login:'Public page offers a nickname and private-room option; the complete joining flow has not been tested.',
+  checkedAt:'2026-10-15',verification:'public_page_review',sourceUrl:'https://skribbl.io/',relationship:'none',
+  discussion:'Take turns drawing. You do not have to be good at it to make the round fun.'},
+ {id:'gartic-phone',type:'external',timing:'live',title:'Let a story get wonderfully lost',provider:'Gartic Phone',category:'With friends',color:'blue',art:'telephone',
+  summary:'An online telephone game that passes ideas between writing and drawing. A group-game alternative to a quiz.',url:'https://garticphone.com/',
+  tags:['Live group game','Storytelling'],mode:'together',players:'Group',duration:null,
+  freeScope:'A public browser game is available; optional features and pricing have not been checked.',
+  login:'Login requirements have not been verified through a complete game.',checkedAt:'2026-10-15',verification:'public_page_review',
+  sourceUrl:'https://garticphone.com/',relationship:'none',discussion:'Start with a simple prompt, then enjoy how it changes through the group.'},
+];
+export const catalog=[...quizzes.map(q=>({id:q.id,type:'native',kind:q.kind,discovery:q.discovery,title:q.title,category:q.category,color:q.color,art:q.art,
+ summary:q.description,url:`/tests/${q.id}/`,tags:[q.category,'Free result'],mode:'compare',players:'Solo · compare with 2+',
+ duration:null,questionCount:q.questions.length,freeScope:'All questions and the complete basic result are free.',login:'No account or email.',
+ checkedAt:'2026-10-15',verification:'implemented',relationship:'none',discussion:q.profiles[Object.keys(q.profiles)[0]].conversation})),...externalEntries];

@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {getQuizzes} from '../src/i18n/content.mjs';
+const origin='http://127.0.0.1:4319',cookies=new Map(),checks=[];
+async function api(action,body,who='creator',admin=false){const res=await fetch(origin+(admin?'/api/admin/insights':'/api/studio/'+action),{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...(cookies.has(who)?{Cookie:cookies.get(who)}:{})},body:JSON.stringify({locale:'zh',...body})});const cookie=res.headers.get('set-cookie');if(cookie)cookies.set(who,cookie.split(';')[0]);return {status:res.status,value:await res.json()};}
+const q=getQuizzes('zh').find(x=>x.id==='communication-style'),answers=profile=>q.questions.map(x=>x.answers.find(a=>a.profile===profile).id),base={quizId:q.id,version:q.version};
+assert.equal((await api('pair-create',{...base,answers:answers('anchor'),consent:false})).status,400);checks.push('Comparison requires explicit result-sharing consent');
+await api('start',base);await api('complete',{...base,answers:answers('anchor')});
+const c=await api('pair-create',{...base,answers:answers('anchor'),consent:true});assert.equal(c.status,200);assert.equal(c.value.comparison,null);const token=c.value.token;
+assert.equal((await api('pair-join',{token,version:q.version,answers:answers('connector'),consent:true})).status,409);checks.push('Creator cannot occupy both participant slots');
+const before=await api('pair-view',{token},'friend');assert.equal(before.value.comparison,null);checks.push('Guest sees no result before finishing');
+const frozen=await fetch(origin+before.value.quizUrl);assert.equal(frozen.status,200);const html=await frozen.text();assert(html.includes('generated-quiz'));checks.push('Invitation opens the frozen same-version questionnaire');
+await api('start',{...base,comparisonToken:token},'friend');
+const joined=await api('pair-join',{token,version:q.version,answers:answers('connector'),consent:true},'friend');assert.equal(joined.status,200);assert(joined.value.ready);assert.equal(joined.value.comparison.a.counts.anchor,12);assert.equal(joined.value.comparison.b.counts.connector,12);checks.push('Independent cookie sessions produce an actual two-result comparison');
+assert.equal((await api('pair-join',{token,version:q.version,answers:answers('anchor'),consent:true},'third')).status,409);checks.push('A third session cannot overwrite either result');
+const sampleUrl=origin+c.value.url;
+assert.equal((await fetch(sampleUrl)).status,200);assert.equal((await fetch(origin+'/en'+c.value.url)).status,200);checks.push('Chinese and English comparison pages return 200');
+const wrongAdmin=await api('insights',{days:30},'third');assert.equal(wrongAdmin.status,403);const admin=await api('insights',{days:30},'owner',true);assert.equal(admin.status,200);assert(!JSON.stringify(admin.value).includes('creator_id'));assert(!JSON.stringify(admin.value).includes('turns'));checks.push('Analytics authorization and aggregate-only response');
+const temp=await api('pair-create',{...base,answers:answers('anchor'),consent:true});await api('pair-revoke',{token:temp.value.token});assert.equal((await api('pair-view',{token:temp.value.token},'friend')).status,410);checks.push('Revoked invitations stop working');
+await fs.mkdir('artifacts/studio-advanced',{recursive:true});await fs.writeFile('artifacts/studio-advanced/http-report.json',JSON.stringify({passed:true,checks,sampleUrl},null,2));console.log(JSON.stringify({passed:true,checks,sampleUrl}));
