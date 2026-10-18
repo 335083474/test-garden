@@ -11,6 +11,14 @@ test('GitHub project paths preserve external URLs and do not duplicate the repos
  assert.equal(sitePath('https://example.com/','/test-garden'),'https://example.com/');
  assert.equal(sitePath('//example.com/','/test-garden'),'//example.com/');
 });
+test('Cloud-enabled shared pages stay on GitHub with query routes and preserve invite/version parameters',t=>{
+ globalThis.document={body:{dataset:{runtime:'cloudflare',basePath:'/test-garden'}}};t.after(()=>delete globalThis.document);
+ const id='ai-'+'a'.repeat(16),token='b'.repeat(64);
+ assert.equal(sitePath('/en/created/'+id+'/?compare='+token),'/test-garden/en/created/?compare='+token+'&id='+id);
+ assert.equal(sitePath('/compare/'+token+'/'),'/test-garden/compare/?token='+token);
+ assert.equal(sitePath('/tests/communication-style/?v=1.0.0'),'/test-garden/tests/communication-style/?v=1.0.0');
+ assert.equal(sitePath('/test-garden/en/created/?id='+id),'/test-garden/en/created/?id='+id);
+});
 test('GitHub directory matching is bilingual, labels its source and selects only catalog entries',async()=>{
  for(const locale of ['zh','en']){const db=storage(),api=createDirectoryAdapter({storage:db,locale});const cat=await api('catalog');assert.equal(cat.entries.length,8);assert(cat.entries.filter(x=>x.type==='native').every(x=>x.url.startsWith('/test-garden/')));
  for(const message of ['前世是什么动物','I want a past life animal quiz']){const response=await api('chat',{message});assert.equal(response.source,'directory');assert(response.choices.some(x=>x.id==='past-life-animal'));assert(response.choices.every(x=>cat.entries.some(e=>e.id===x.id)));const selected=await api('select',{conversationId:response.conversationId,index:0});assert(selected.url.startsWith('/test-garden/'));}

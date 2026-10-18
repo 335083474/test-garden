@@ -1,8 +1,8 @@
 import {escapeHtml as e} from './engine.mjs';
 import {studioApi,offerMarkup,bindOffers} from './studio.mjs';
-import {githubMode} from './site-path.mjs';
+import {githubMode,sitePath} from './site-path.mjs';
 const en=document.documentElement.lang==='en',locale=en?'en':'zh',s=(zh,english)=>en?english:zh;
-const tokenFromPage=()=>location.pathname.match(/\/compare\/([a-f0-9]{64})\//)?.[1];
+const tokenFromPage=()=>location.pathname.match(/\/compare\/([a-f0-9]{64})\//)?.[1]||new URLSearchParams(location.search).get('token');
 const showError=(target,error)=>{target.textContent=({comparison_limit:s('你今天创建的邀请已达上限，可以继续使用已有邀请。','Today’s invitation limit is reached. Use an existing invitation.'),admin_required:s('此页面只允许站点管理者访问。','This page is restricted to the site owner.'),comparison_full:s('这个邀请已经有两位参与者，请新建一个邀请。','This invitation already has two participants. Create a new one.'),comparison_same_browser:s('这是你发起的邀请。请让朋友在另一个浏览器或设备完成测试。','This is your invitation. Have your friend use another browser or device.'),comparison_unavailable:s('邀请已撤销或过期。','This invitation was revoked or expired.'),comparison_not_found:s('找不到这个邀请，可能已过期或被删除。','This invitation was not found. It may have expired or been deleted.')})[error.code]||s('暂时没有完成，请重试。','That did not complete. Please retry.');};
 export function attachPairExperience({stage,quiz,result,answers}){
  if(githubMode()){
@@ -15,7 +15,7 @@ export function attachPairExperience({stage,quiz,result,answers}){
  consent.addEventListener('change',()=>button.disabled=!consent.checked);
  button.addEventListener('click',async()=>{button.disabled=true;try{
   const value=await studioApi(token?'pair-join':'pair-create',{token,quizId:quiz.id,version:quiz.version,answers,consent:consent.checked});
-  if(token){location.assign((en?'/en':'')+`/compare/${token}/`);return;}
+  if(token){location.assign(sitePath((en?'/en':'')+`/compare/${token}/`));return;}
   const url=new URL(value.url,location.origin).href,output=box.querySelector('[data-pair-action-output]');
   output.innerHTML=`<input class="studio-link" readonly aria-label="${s('双人邀请链接','Comparison invitation link')}" value="${e(url)}"><button class="button light" data-copy-pair>${s('复制双人邀请','Copy invitation')}</button> <a class="text-link" href="${e(value.url)}">${s('打开对比页','Open comparison')} ↗</a>`;
   output.querySelector('button').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(url);status.textContent=s('邀请已复制，可以发给朋友。','Copied. Send the invitation to a friend.');}catch{output.querySelector('input').select();status.textContent=s('请复制上方链接。','Copy the link above.');}});
@@ -27,7 +27,7 @@ async function mountComparison(root){
  async function load(){
   try{
    const data=await studioApi('pair-view',{token});status.textContent='';
-   const url=location.origin+(en?'/en':'')+`/compare/${token}/`;
+   const url=location.origin+sitePath((en?'/en':'')+`/compare/${token}/`);
    const intro=`<div class="studio-pair-heading"><h2>${e(data.title)}</h2><p>${s('同一版本','Same version')} ${e(data.version)} · ${data.questionCount} ${s('题','questions')} · ${s('到期','Expires')} ${e(new Date(data.expiresAt).toLocaleDateString(en?'en-US':'zh-CN'))}</p></div>`;
    const comparison=data.comparison;
    content.innerHTML=intro+(data.ready?`<div class="studio-pair-leaders"><div><small>${s('发起者的故事','CREATOR’S STORY')}</small><h3>${e(comparison.a.leaders.join(' + '))}</h3></div><div><small>${s('朋友的故事','FRIEND’S STORY')}</small><h3>${e(comparison.b.leaders.join(' + '))}</h3></div></div><p>${e(comparison.interpretation)}</p><div class="comparison"><table><caption>${s('这次选择的分布','Distribution of choices this time')}</caption><thead><tr><th>${s('角色','Profile')}</th><th>${s('发起者','Creator')}</th><th>${s('朋友','Friend')}</th></tr></thead><tbody>${comparison.rows.map(row=>`<tr><th>${e(row.name)}</th><td>${row.a}/${data.questionCount} · ${row.aPercent}%<span class="studio-pair-bar"><i style="width:${row.aPercent}%"></i></span></td><td>${row.b}/${data.questionCount} · ${row.bPercent}%<span class="studio-pair-bar second"><i style="width:${row.bPercent}%"></i></span></td></tr>`).join('')}</tbody></table></div><p class="note">${e(comparison.note)}</p><section class="studio-pair-discuss"><h3>${s('从这几个问题开始聊','Start a conversation')}</h3><ol>${comparison.prompts.map(x=>`<li>${e(x)}</li>`).join('')}</ol></section><button class="button" data-pair-next>${s('为我们推荐下一项测试','Find our next quiz')} ↗</button><p role="status" data-pair-next-status></p><div class="studio-three" data-pair-next-offers></div>`:`<div class="studio-pair-waiting"><h3>${data.isCreator?s('等朋友带着另一份故事回来。','Waiting for your friend’s story.'):s('轮到你，独立答一遍。','Your turn to take the quiz independently.')}</h3><p>${s('双方完成并主动提交后，才展示对比。我们不会提前展示对方的结果来影响你的选择。','The comparison appears after both people finish and submit. The other result is hidden while you answer independently.')}</p>${data.isCreator?`<input class="studio-link" readonly aria-label="${s('双人邀请链接','Comparison invitation link')}" value="${e(url)}"><button class="button light" data-pair-copy>${s('复制邀请链接','Copy invitation')}</button>`:`<a class="button" href="${e(data.quizUrl)}">${s('开始同版本测试','Take the same quiz version')} ↗</a>`}<button class="quiet-button" data-pair-refresh>${s('刷新对比状态','Refresh status')}</button></div>`)+`<p class="studio-rank-note">${s('持有邀请链接的人可查看双方摘要。请只分享给愿意一起测试的人。','Anyone with this invitation can view the shared comparison. Share it only with the person you want to invite.')}</p>${data.isCreator?`<button class="quiet-button" data-pair-revoke>${s('撤销这个邀请','Revoke invitation')}</button>`:''}`;

@@ -1,16 +1,28 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {build} from 'esbuild';
+import cloud from '../cloudflare.config.mjs';
 
 process.env.SITE_URL='https://335083474.github.io';
 process.env.SITE_PUBLIC='true';
-const {pages,notFound,absolute}=await import('../src/render.mjs');
+const {hostedCopy}=await import('../src/server/studio-worker.mjs');
+const {pages,notFound,absolute,createRenderer}=await import('../src/render.mjs');
 const {flower}=await import('../src/art.mjs');
 const root=path.resolve(import.meta.dirname,'..'),out=path.join(root,'dist-github'),base='/test-garden';
+const connected=Boolean(cloud.apiOrigin);
+if(connected&&!/^https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/.test(cloud.apiOrigin))throw Error('Invalid Cloudflare API origin');
 await fs.mkdir(out,{recursive:true});
 await fs.mkdir(path.join(out,'assets'),{recursive:true});
 function htmlForGithub(html,locale='zh',pagePath='/'){
  const en=locale==='en',s=(zh,english)=>en?english:zh;
+ if(connected){
+  let value=hostedCopy(html).replace('<body data-runtime="hosted">',`<body data-runtime="cloudflare" data-base-path="${base}" data-api-origin="${cloud.apiOrigin}">`)
+   .replaceAll('https://335083474.github.io/','https://335083474.github.io'+base+'/')
+   .replace(/\b(href|src|action)="\/(?!\/)/g,`$1="${base}/`);
+  if(pagePath.endsWith('/privacy/'))value=value.replace(/<article class="reading">[\s\S]*?<\/article>/,`<article class="reading"><h1>${s('隐私与分享说明','Privacy and sharing')}</h1><p>${s('网页由 GitHub Pages 提供；AI 接口与数据库由 Cloudflare 提供，AI 模型由 MiniMax 提供。需求、追问和显示语言会通过本站后端发送到 MiniMax；密钥只保存在后端。','GitHub Pages serves the website; Cloudflare provides the API and database; MiniMax provides AI. Requests, follow-up replies and display language are sent through our backend to MiniMax. API credentials stay on the backend.')}</p><h2>${s('需求与答案','Requests and answers')}</h2><p>${s('进行中的对话最多暂存2小时。只有主动勾选保存时，对话与选择才保留30天用于需求分析及后续推荐。原始答题答案发送到后端校验后丢弃；保留完成记录与主动反馈。过期记录在后续请求时清理。','Active conversations are temporarily retained for up to 2 hours. Opting in retains requests and choices for 30 days for analysis and recommendations. Raw quiz answers are validated by the backend and discarded; completion records and voluntary feedback are retained. Expired records are cleaned during subsequent requests.')}</p><h2>${s('访客身份与删除','Visitor identity and deletion')}</h2><p>${s('浏览器保留随机访客凭证，用于读取自己的记录与撤销自己发起的邀请。不需要登录，不使用第三方Cookie。你可以在首页删除自己的需求、完成记录与反馈，相关双人邀请也会失效；通用测试内容独立保留。清除浏览器数据会丢失这一身份。','A random visitor credential stays in this browser to access your own records and revoke your invitations. No login or third-party cookies are required. Delete your requests, completions and feedback from the homepage; related comparison invitations are also removed. General quiz content remains separate. Clearing browser data loses this visitor identity.')}</p><h2>${s('分享与双人对比','Sharing and comparisons')}</h2><p>${s('默认分享链接不含结果。可主动附上角色摘要；原始答案不会进入链接。双方各自同意提交后才展示对比，保存角色与分布，不保存逐题答案。邀请7天到期，发起者可撤销。持链接者可以查看共同摘要；其他人的私人需求不会加入共享摘要。','Default share links omit your result. You can opt to include profile names, never individual answers. Comparisons appear only after both participants consent and submit. Only profile names and distributions are saved, not individual answers. Invitations expire after 7 days and can be revoked. Link holders can view the joint summary; private requests are never included.')}</p><h2>${s('调用限制与安全','Usage limits and security')}</h2><p>${s('AI 有全站与每位访客的每日调用上限，并按网络来源限制滥用。网络来源只保存带每日变化的服务端密钥散列，不保存原始IP。测试完成数按浏览器身份与版本去重，不等于独立真实人数；反馈不是科学准确率。','AI has daily site-wide, per-visitor and network abuse limits. Network identifiers are stored only as daily keyed hashes, not raw IP addresses. Completions are deduplicated by browser identity and version, not independently verified people. Feedback is not scientific accuracy.')}</p></article>`);
+  if(pagePath==='/404/')value=value.replaceAll('/en/404/','/en/404.html').replaceAll('/404/','/404.html');
+  return value;
+ }
  let value=html.replace('<body>',`<body data-runtime="github" data-base-path="${base}">`)
   .replaceAll('https://335083474.github.io/','https://335083474.github.io'+base+'/')
   .replace(/\b(href|src|action)="\/(?!\/)/g,`$1="${base}/`)
@@ -30,6 +42,10 @@ function htmlForGithub(html,locale='zh',pagePath='/'){
  return value.replace('</head>','<style>.github-release-note{padding:12px 24px;background:#eee7fc;color:#49375d;text-align:center;font:13px/1.6 system-ui,sans-serif}.studio-consent{line-height:1.6}</style></head>');
 }
 const all=pages();
+if(connected)for(const locale of ['zh','en'])for(const kind of ['created','comparison','library']){
+ const renderer=createRenderer(locale),part=kind==='comparison'?'compare':kind;
+ all.push({path:(locale==='en'?'/en':'')+'/'+part+'/',html:kind==='library'?renderer.libraryPage():renderer.featurePage(kind)});
+}
 for(const p of all){const relative=p.path.slice(1),dest=path.join(out,relative,'index.html');await fs.mkdir(path.dirname(dest),{recursive:true});await fs.writeFile(dest,htmlForGithub(p.html,p.path.startsWith('/en/')?'en':'zh',p.path));}
 await fs.writeFile(path.join(out,'404.html'),htmlForGithub(notFound(),'zh','/404/'));
 await fs.writeFile(path.join(out,'en/404.html'),htmlForGithub(notFound('en'),'en','/404/'));
@@ -44,5 +60,5 @@ await fs.writeFile(path.join(out,'assets/brand.svg'),flower.replace('<svg ','<sv
 await build({entryPoints:['src/app.mjs','src/studio.mjs'],outdir:path.join(out,'assets'),outExtension:{'.js':'.mjs'},bundle:true,splitting:true,format:'esm',platform:'browser',target:'es2022',absWorkingDir:root});
 await fs.writeFile(path.join(out,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${all.map(p=>`<url><loc>${absolute(base+p.path)}</loc></url>`).join('')}</urlset>`);
 await fs.writeFile(path.join(out,'robots.txt'),`User-agent: *\nAllow: /test-garden/\nSitemap: https://335083474.github.io/test-garden/sitemap.xml\n`);
-await fs.writeFile(path.join(out,'release.json'),JSON.stringify({host:'github-pages',backend:null,pages:all.length,quizzes:5,externalActivities:3,aiConnected:false,source:process.env.GITHUB_SHA||'local'},null,2));
-console.log(JSON.stringify({host:'github-pages',pages:all.length,out,backend:null}));
+await fs.writeFile(path.join(out,'release.json'),JSON.stringify({host:'github-pages',backend:cloud.apiOrigin||null,pages:all.length,quizzes:5,externalActivities:3,aiConnected:connected,source:process.env.GITHUB_SHA||'local'},null,2));
+console.log(JSON.stringify({host:'github-pages',pages:all.length,out,backend:cloud.apiOrigin||null}));

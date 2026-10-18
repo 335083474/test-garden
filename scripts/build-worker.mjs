@@ -5,7 +5,7 @@ import {build} from 'esbuild';
 
 export async function buildWorker(root,out,outputPages,manifest){
  const names=['404.html','en/404.html','sitemap.xml','robots.txt',...outputPages.map(p=>p.path.slice(1)+'index.html'),
-  ...['styles.css','studio.css','site-path.mjs','github-directory.mjs','studio.mjs','studio-ui.mjs','studio-advanced.mjs','studio-advanced-ui.mjs','garden.webp','ancient.jpg','friends.jpg','qrcode.js','qrcode-LICENSE.txt','app.mjs','engine.mjs','art.mjs','recommender.mjs','brand.svg','social.svg','social.png','social-zh.png'].map(x=>'assets/'+x),
+  ...['styles.css','studio.css','site-path.mjs','cloud-client.mjs','cloud-quiz.mjs','github-directory.mjs','studio.mjs','studio-ui.mjs','studio-advanced.mjs','studio-advanced-ui.mjs','garden.webp','ancient.jpg','friends.jpg','qrcode.js','qrcode-LICENSE.txt','app.mjs','engine.mjs','art.mjs','recommender.mjs','brand.svg','social.svg','social.png','social-zh.png'].map(x=>'assets/'+x),
   ...['quizzes.mjs','catalog.mjs','fun-quizzes.mjs'].map(x=>'assets/data/'+x),...['ui.mjs','zh.mjs','content.mjs','guide.mjs'].map(x=>'assets/i18n/'+x)];
  const assets=Object.fromEntries(await Promise.all(names.map(async name=>['/'+name,(await fs.readFile(path.join(out,name))).toString('base64')])));
  const catalogs={zh:getCatalog('zh'),en:getCatalog('en')};

@@ -59,7 +59,7 @@ export function createRenderer(locale){
  return {
   pages:()=>[{basePath:'/',html:home()},{basePath:'/explore/',html:explorer()},{basePath:'/tests/',html:explorer(true)},...quizzes.map(q=>({basePath:`/tests/${q.id}/`,html:quizPage(q)})),{basePath:'/quizzes/friends/',html:friends()},...['about','methodology','privacy'].map(k=>({basePath:`/${k}/`,html:articlePage(k)}))].map(p=>({...p,path:r(p.basePath),locale})),
   quizPage,
-  featurePage:(kind)=>shell({title:kind==='analysis'?(locale==='zh'?'需求与反馈分析':'Request and feedback analysis'):(locale==='zh'?'双人故事对比':'Compare your stories'),description:locale==='zh'?'根据真实选择，继续探索':'Explore with actual choices',basePath:kind==='analysis'?'/admin/':'/compare/',noindex:true,body:advancedPage(locale,kind)}),
+  featurePage:(kind)=>shell({title:kind==='created'?(locale==='zh'?'AI 新测试':'AI-created quiz'):kind==='analysis'?(locale==='zh'?'需求与反馈分析':'Request and feedback analysis'):(locale==='zh'?'双人故事对比':'Compare your stories'),description:locale==='zh'?'根据真实选择，继续探索':'Explore with actual choices',basePath:kind==='created'?'/created/':kind==='analysis'?'/admin/':'/compare/',noindex:true,body:advancedPage(locale,kind)}),
   libraryPage:()=>shell({title:locale==='zh'?'测试库与排行榜':'Quiz library and rankings',description:locale==='zh'?'已有测试与 AI 新作':'Original quizzes and AI creations',basePath:'/library/',noindex:true,body:studioLibrary(locale)}),
   notFound:()=>shell({title:t('notFound'),description:t('notFoundCopy'),basePath:'/404/',noindex:true,body:`<section class="reading"><div class="eyebrow">${t('offPath')}</div><h1>${t('notFound')}</h1><p>${t('notFoundCopy')}</p>${link(r('/explore/'),t('exploreGarden'))}</section>`}),
  };

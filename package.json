@@ -12,7 +12,9 @@
     "test:studio:real": "node scripts/test-studio-plan.mjs",
     "test:studio:http": "node scripts/test-studio-http.mjs",
     "db:generate": "drizzle-kit generate --config=drizzle.config.mjs",
-    "build:github": "node scripts/build-github.mjs"
+    "build:github": "node scripts/build-github.mjs",
+    "deploy:api": "wrangler deploy",
+    "dev:api": "wrangler dev"
   },
   "dependencies": {
     "jsonrepair": "3.15.0",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "drizzle-kit": "0.31.11",
     "drizzle-orm": "0.45.4",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "wrangler": "4.151.1"
   }
 }

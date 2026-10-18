@@ -11,3 +11,5 @@ node_modules/
 .dev.vars
 
 .local-data/
+.wrangler/
+.dev.vars*

@@ -1,9 +1,10 @@
 import {escapeHtml as e} from './engine.mjs';
 import {attachPairExperience,mountAdvanced} from './studio-advanced.mjs';
-import {sitePath,githubMode} from './site-path.mjs';
-const locale=document.documentElement.lang.startsWith('zh')?'zh':'en',en=locale==='en',s=(zh,english)=>en?english:zh,hosted=['hosted','github'].includes(document.body.dataset.runtime);
+import {sitePath,githubMode,cloudMode} from './site-path.mjs';
+const locale=document.documentElement.lang.startsWith('zh')?'zh':'en',en=locale==='en',s=(zh,english)=>en?english:zh,hosted=['hosted','github','cloudflare'].includes(document.body.dataset.runtime);
 const errorText=error=>({ai_daily_limit:s('今天的 AI 使用次数已达上限，明天再来试试。已有测试仍然可以做。','Today’s AI limit has been reached. Existing quizzes are still available.'),ai_busy:s('AI 暂时繁忙，请稍后重试。','AI is busy. Please try again shortly.'),ai_unavailable:s('暂时未能连接 AI，请重试。','The AI connection failed. Please retry.'),local_test_busy:s('当前账号正在处理另一个请求，请稍后再试。','The account is processing another request. Please try again shortly.'),conversation_expired:s('这段对话已过期，请重新开始。','This conversation expired. Please start again.'),plan_limit:s('当前账号的 Codex 额度暂时不足，请稍后再试。','The signed-in account has reached its Codex usage limit. Try later.'),plan_login_required:s('请先在本机 Codex 登录 ChatGPT。','Sign in to ChatGPT in the local Codex app first.'),plan_network_error:s('连接 AI 服务失败，请稍后重试。','The AI connection failed. Please try again.'),version_changed:s('测试版本已更新，请刷新后重新作答。','This quiz version changed. Refresh and take it again.')})[error.code]||s('这次没有完成，请重试。不会用预设答案冒充 AI 回复。','That did not complete. Please retry. No canned AI response is substituted.');
 export async function studioApi(action,input={},signal){
+ if(cloudMode())return (await import('./cloud-client.mjs')).cloudApi(action,input,signal);
  if(githubMode())return (await import('./github-directory.mjs')).directoryApi(action,input);
  const response=await fetch('/api/studio/'+action,{method:'POST',headers:{'Content-Type':'application/json',Accept:hosted?'text/event-stream':'application/json'},cache:'no-store',body:JSON.stringify({locale,...input}),signal});
  if(response.headers.get('content-type')?.includes('text/event-stream')){
@@ -105,7 +106,7 @@ export function attachResultExperience({stage,quiz,result,answers,locale,saveCar
  async function finish(){try{const comparisonToken=new URLSearchParams(location.search).get('compare')||undefined;await studioApi('complete',{quizId:quiz.id,version:quiz.version,answers,comparisonToken});if(comparisonToken){relatedStatus.textContent=s('提交双人结果后，可在对比页获得结合双方故事的下一步推荐。','After submitting your comparison result, find recommendations for both stories on the comparison page.');}else await continuation();}catch(error){relatedStatus.textContent=errorText(error);const retry=document.createElement('button');retry.className='quiet-button';retry.textContent=s('重试完成与推荐','Retry completion and recommendations');retry.addEventListener('click',()=>{retry.remove();void finish();});related.append(retry);}}
  void finish();
 }
-function mountInvitation(){
+export function mountInvitation(){
  const root=document.querySelector('[data-quiz]');if(!root)return;
  const data=new URLSearchParams(location.hash.slice(1)),keys=data.get('result')?.split(',');if(!keys)return;
  const generated=JSON.parse(document.querySelector('#generated-quiz')?.textContent||'[]');

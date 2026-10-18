@@ -1,5 +1,8 @@
 import {getQuizzes,getCatalog} from './i18n/content.mjs';
 import {text,route,languageTag,locales,defaultLocale} from './i18n/ui.mjs';
+import {prepareCloudQuiz} from './cloud-quiz.mjs';
+await prepareCloudQuiz();
+if(document.body.dataset.runtime==='cloudflare'&&document.querySelector('#generated-quiz'))mountInvitation();
 const locale=locales.find(key=>languageTag(key)===document.documentElement.lang)||defaultLocale;
 const t=(key,vars)=>text(locale,key,vars),r=path=>route(locale,path);
 const quizzes=[...JSON.parse(document.querySelector('#generated-quiz')?.textContent||'[]'),...getQuizzes(locale)],catalog=getCatalog(locale);
@@ -8,7 +11,7 @@ import {scoreQuiz,resultTitle,filterCatalog,escapeHtml as e} from './engine.mjs'
 import {art} from './art.mjs';
 import {recommendTests} from './recommender.mjs';
 import {guideCopy} from './i18n/guide.mjs';
-import {attachResultExperience,recordQuizStart,qrSvgMarkup,quizShareUrl} from './studio.mjs';
+import {attachResultExperience,recordQuizStart,qrSvgMarkup,quizShareUrl,mountInvitation} from './studio.mjs';
 
 for(const root of document.querySelectorAll('[data-test-guide]')){
  const copy=guideCopy[locale],form=root.querySelector('form'),input=form.elements.need,scope=form.elements.scope;

@@ -1,0 +1,25 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "test-garden-api",
+	"main": "src/server/cloudflare-api.mjs",
+	"compatibility_date": "2026-10-18",
+	"account_id": "d00f61338fefb2242944521e341be0d6",
+	"workers_dev": true,
+	"vars": {
+		"WEB_ORIGIN": "https://335083474.github.io",
+		"MINIMAX_REGION": "cn",
+		"MINIMAX_MODEL": "MiniMax-M3",
+		"STUDIO_DAILY_CALL_LIMIT": "50"
+	},
+	"observability": {
+		"enabled": false
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "test-garden",
+			"database_id": "12955719-b35f-40cc-9efe-d9bdf7a6d19f",
+			"remote": true
+		}
+	]
+}
