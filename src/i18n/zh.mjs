@@ -1,6 +1,7 @@
 // Localized content only. Stable IDs, answer/profile keys and scoring stay in data/quizzes.mjs.
+import {zhLoveQuiz} from '../data/love-quiz.mjs';
 import {zhFunQuizzes} from '../data/fun-quizzes.mjs';
-export const zhQuizzes={...zhFunQuizzes,
+export const zhQuizzes={...zhFunQuizzes,'love-language':zhLoveQuiz,
  'communication-style':{
   version:'1.0.0',title:'沟通风格测试',shortTitle:'找到你的沟通节奏',seoTitle:'免费沟通风格测试：完整结果与实用建议',
   description:'用 12 个日常情境，了解你表达、倾听和推进对话的偏好。无需注册，免费查看完整结果与实用建议。',

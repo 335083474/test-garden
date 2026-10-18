@@ -22,7 +22,7 @@ test('Chinese questions and results use the exact same IDs, version, answer maps
    question.answers.forEach((answer,k)=>{assert.equal(answer.id,other.answers[k].id);assert.equal(answer.profile,other.answers[k].profile);assert.match(other.answers[k].text,/\p{Script=Han}/u);});
   }
   for(let sample=0;sample<8;sample++){
-   const answers=q.questions.map((question,n)=>question.answers[(n*sample+sample)%4].id);
+   const answers=q.questions.map((question,n)=>question.answers[(n*sample+sample)%question.answers.length].id);
    assert.deepEqual(scoreQuiz(q,answers),scoreQuiz(translated,answers));
   }
  });
@@ -34,8 +34,8 @@ test('translated catalog keeps stable filtering keys and Chinese search works',(
  assert.equal(route('zh','/tests/work-style/'),'/tests/work-style/');
  assert.equal(route('en','/tests/work-style/'),'/en/tests/work-style/');
 });
-test('24 static pages have matching language switches, self canonicals, and reciprocal hreflang',()=>{
- const output=pages();assert.equal(output.length,24);
+test('28 static pages have matching language switches, self canonicals, and reciprocal hreflang',()=>{
+ const output=pages();assert.equal(output.length,28);
  for(const p of output){
   assert(p.html.includes(`<html lang="${languageTag(p.locale)}">`));
   assert(p.html.includes(`rel="canonical" href="${origin+p.path}"`));

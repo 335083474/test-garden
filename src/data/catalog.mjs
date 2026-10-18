@@ -20,6 +20,6 @@ export const externalEntries=[
   sourceUrl:'https://garticphone.com/',relationship:'none',discussion:'Start with a simple prompt, then enjoy how it changes through the group.'},
 ];
 export const catalog=[...quizzes.map(q=>({id:q.id,type:'native',kind:q.kind,discovery:q.discovery,title:q.title,category:q.category,color:q.color,art:q.art,
- summary:q.description,url:`/tests/${q.id}/`,tags:[q.category,'Free result'],mode:'compare',players:'Solo · compare with 2+',
+ summary:q.description,url:`/tests/${q.id}/`,tags:[q.category,'Free result',...(q.discoveryTags||[])],mode:'compare',players:'Solo · compare with 2+',
  duration:null,questionCount:q.questions.length,freeScope:'All questions and the complete basic result are free.',login:'No account or email.',
  checkedAt:'2026-10-15',verification:'implemented',relationship:'none',discussion:q.profiles[Object.keys(q.profiles)[0]].conversation})),...externalEntries];

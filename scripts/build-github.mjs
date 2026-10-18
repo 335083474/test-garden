@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {build} from 'esbuild';
 import cloud from '../cloudflare.config.mjs';
+import {quizzes} from '../src/data/quizzes.mjs';
 
 process.env.SITE_URL='https://335083474.github.io';
 process.env.SITE_PUBLIC='true';
@@ -58,7 +59,7 @@ await fs.writeFile(path.join(out,'assets/qrcode-LICENSE.txt'),(await fs.readFile
 await fs.writeFile(path.join(out,'assets/brand.svg'),flower.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" style="color:#193e31" '));
 // Bundle all browser dependencies, including lazy imports, without exporting any backend code.
 await build({entryPoints:['src/app.mjs','src/studio.mjs'],outdir:path.join(out,'assets'),outExtension:{'.js':'.mjs'},bundle:true,splitting:true,format:'esm',platform:'browser',target:'es2022',absWorkingDir:root});
-await fs.writeFile(path.join(out,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${all.map(p=>`<url><loc>${absolute(base+p.path)}</loc></url>`).join('')}</urlset>`);
+await fs.writeFile(path.join(out,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${all.filter(p=>!/<meta name="robots" content="noindex/.test(p.html)).map(p=>`<url><loc>${absolute(base+p.path)}</loc></url>`).join('')}</urlset>`);
 await fs.writeFile(path.join(out,'robots.txt'),`User-agent: *\nAllow: /test-garden/\nSitemap: https://335083474.github.io/test-garden/sitemap.xml\n`);
-await fs.writeFile(path.join(out,'release.json'),JSON.stringify({host:'github-pages',backend:cloud.apiOrigin||null,pages:all.length,quizzes:5,externalActivities:3,aiConnected:connected,source:process.env.GITHUB_SHA||'local'},null,2));
+await fs.writeFile(path.join(out,'release.json'),JSON.stringify({host:'github-pages',backend:cloud.apiOrigin||null,pages:all.length,quizzes:quizzes.length,externalActivities:3,aiConnected:connected,source:process.env.GITHUB_SHA||'local'},null,2));
 console.log(JSON.stringify({host:'github-pages',pages:all.length,out,backend:cloud.apiOrigin||null}));

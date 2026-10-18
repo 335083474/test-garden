@@ -9,6 +9,6 @@ async function visit(dir){for(const e of await fs.readdir(dir,{withFileTypes:tru
  for(const match of html.matchAll(/(?:href|src)="([^"]+)"/g)){const raw=match[1].replaceAll('&amp;','&');if(raw.startsWith('#')||/^(?:mailto:|data:)/.test(raw))continue;const url=new URL(raw,origin+prefix+'/');if(url.origin!==origin)continue;assert(url.pathname.startsWith(prefix+'/'),raw);const relative=decodeURIComponent(url.pathname.slice(prefix.length+1));const target=path.join(out,relative,url.pathname.endsWith('/')?'index.html':'');assert(target.startsWith(out+path.sep));await fs.access(target);links++;}
  for(const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)){JSON.parse(match[1]);graphs++;}
  }}
-await visit(out);assert.equal(pages,cloud.apiOrigin?32:26);assert.equal(graphs,cloud.apiOrigin?32:26);
+await visit(out);assert.equal(pages,cloud.apiOrigin?36:30);assert.equal(graphs,cloud.apiOrigin?36:30);
 const home=await fs.readFile(path.join(out,'index.html'),'utf8');assert(home.includes('data-studio-guide'));assert(home.includes('data-studio-library'));assert.equal(home.includes('data-studio-sort="new"'),Boolean(cloud.apiOrigin));
 const release=JSON.parse(await fs.readFile(path.join(out,'release.json'),'utf8'));assert.equal(release.aiConnected,Boolean(cloud.apiOrigin));console.log(JSON.stringify({pages,links,graphs,backend:release.backend,host:release.host}));

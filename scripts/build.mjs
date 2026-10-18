@@ -16,7 +16,7 @@ for(const p of outputPages){const dir=path.join(out,p.path);await fs.mkdir(dir,{
 await fs.writeFile(path.join(out,'404.html'),notFound());
 await fs.writeFile(path.join(out,'en/404.html'),notFound('en'));
 for(const name of ['styles.css','studio.css','site-path.mjs','cloud-client.mjs','cloud-quiz.mjs','github-directory.mjs','studio.mjs','studio-ui.mjs','studio-advanced.mjs','studio-advanced-ui.mjs','app.mjs','engine.mjs','art.mjs','recommender.mjs'])await fs.copyFile(path.join(root,'src',name),path.join(out,'assets',name));
-for(const name of ['quizzes.mjs','catalog.mjs','fun-quizzes.mjs'])await fs.copyFile(path.join(root,'src/data',name),path.join(out,'assets/data',name));
+for(const name of ['quizzes.mjs','catalog.mjs','fun-quizzes.mjs','love-quiz.mjs'])await fs.copyFile(path.join(root,'src/data',name),path.join(out,'assets/data',name));
 for(const name of ['ui.mjs','zh.mjs','content.mjs','guide.mjs'])await fs.copyFile(path.join(root,'src/i18n',name),path.join(out,'assets/i18n',name));
 await fs.writeFile(path.join(out,'assets/brand.svg'),flower.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" style="color:#193e31" '));
 const social=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#f8f7ef"/><circle cx="1020" cy="300" r="280" fill="#e5ecb2"/><text x="80" y="110" font-family="Georgia" font-size="38" fill="#193e31">Test Garden.</text><text x="80" y="270" font-family="Georgia" font-size="77" fill="#193e31">A little curious?</text><text x="80" y="365" font-family="Georgia" font-size="77" fill="#6e8266">Start with yourself.</text><text x="85" y="490" font-family="Arial" font-size="25" fill="#646e61">Free quizzes. Full results. No sign-up.</text></svg>`;

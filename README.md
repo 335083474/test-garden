@@ -47,3 +47,12 @@ node scripts/serve-github.mjs
 GitHub 页面没有 AI 密钥。线上AI通过Cloudflare后端使用MiniMax额度，不使用本机Codex额度。MiniMax密钥与网络散列盐只配置在Cloudflare Secrets，不写入源码、Pages或浏览器。共享调用上限为每天全站50次、每位访客15次，同一网络每日30次；失败调用也可能消耗名额。这不是精确金额预算，也不代表无限免费AI。
 
 测试用于娱乐和自我探索，未经过心理测量验证。
+
+
+### Love expression release (2026-10-18)
+
+- Public test: `/tests/love-language/` and `/en/tests/love-language/`; topic: `/quizzes/love/` and `/en/quizzes/love/`. GitHub uses the `/test-garden` prefix.
+- Fifteen original bilingual situations, five care preferences, full free results, mixed results, downloadable QR cards, optional result-label sharing, consented frozen-version comparisons and AI next-test recommendations. This is not the official Five Love Languages quiz or a validated psychological scale.
+- Both languages share answer IDs, profile keys and version. Source: `src/data/love-quiz.mjs`; static method, evidence and couples instructions: `src/love-pages.mjs`.
+- API catalog changes require `npm run deploy:api` as well as the GitHub frontend release. No D1 migration or secret change is needed.
+- `node scripts/test-love-cloud.mjs` verifies real shared scoring/comparisons and cleans up its synthetic visitors; `--ai` additionally spends authorized MiniMax calls. Browser QA artifacts are ignored under `artifacts/love-release/`.

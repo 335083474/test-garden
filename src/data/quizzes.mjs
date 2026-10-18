@@ -1,3 +1,4 @@
+import {loveQuiz} from './love-quiz.mjs';
 import {funQuizzes} from './fun-quizzes.mjs';
 const profile = (name, tagline, summary, strengths, stretch, practice, conversation) => ({ name, tagline, summary, strengths, stretch, practice, conversation });
 const question = (id, prompt, answers) => ({ id, prompt, answers: answers.map(([profile, text], i) => ({id:`${id}-${i+1}`, profile, text})) });
@@ -100,5 +101,5 @@ export const quizzes = [
   ]),
   faqs:[['What does a work style quiz measure?','This quiz summarizes your choices about planning, collaboration, experimentation, and follow-through. It describes preferences within these questions, not your skill level or performance.'],['Is this a career test?','No. It does not match you to jobs, assess abilities, or predict career outcomes. It is a starting point for thinking about your day-to-day work.'],['Can an employer use this to assess candidates?','This original quiz has not been validated for employment selection. It is intended for voluntary personal reflection, not candidate assessment.'],['Will I get all my results for free?','Yes. Your style mix, explanation, and practical suggestion are free, with no account or email required.']],
  }
- ,...funQuizzes
+ ,loveQuiz,...funQuizzes
 ];

@@ -16,7 +16,7 @@ test('Cloudflare API permits only the configured frontend and bounded authentica
  assert.equal((await worker.fetch(request('catalog',{},a,{Authorization:''}),env)).status,401);
  assert.equal((await worker.fetch(request('chat',{message:'x'.repeat(17000)}),env)).status,413);
  assert.equal((await worker.fetch(request('insights',{days:30},a,{'oai-authenticated-user-email':'owner@example.com'}),env)).status,403);assert.equal(calls,0);
- const catalog=await worker.fetch(request('catalog'),env);assert.equal(catalog.status,200);assert.equal((await catalog.json()).entries.length,8);assert.equal(catalog.headers.get('set-cookie'),null);
+ const catalog=await worker.fetch(request('catalog'),env);assert.equal(catalog.status,200);assert.equal((await catalog.json()).entries.length,9);assert.equal(catalog.headers.get('set-cookie'),null);
 });
 test('Hashed bearer identities persist conversations across workers and isolate private opt-in history',async t=>{
  const DB=testD1();t.after(()=>DB.close());const env=envFor(DB),worker=()=>createCloudApi({fetchModel:model});

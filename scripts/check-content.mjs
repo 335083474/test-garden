@@ -9,12 +9,12 @@ const root=path.resolve(import.meta.dirname,'..');
 const worker=(await import('data:text/javascript;base64,'+(await fs.readFile(path.join(root,'dist/server/index.js'))).toString('base64'))).default;
 const readOutput=async name=>(await worker.fetch(new Request(origin+'/'+name),{})).text();
 const generated=pages(),paths=new Set(generated.map(p=>p.path)),titles=new Set(),descriptions=new Set();
-assert.equal(quizzes.length,5);assert.equal(catalog.length,new Set(catalog.map(x=>x.id)).size);
+assert.equal(quizzes.length,6);assert.equal(catalog.length,new Set(catalog.map(x=>x.id)).size);
 for(const q of quizzes){
- assert.equal(q.questions.length,12);
- assert.equal(new Set(q.questions.map(x=>x.id)).size,12);
+ assert.equal(q.questions.length,q.id==='love-language'?15:12);
+ assert.equal(new Set(q.questions.map(x=>x.id)).size,q.questions.length);
  for(const question of q.questions){
-  assert.equal(question.answers.length,4);
+  assert.equal(question.answers.length,Object.keys(q.profiles).length);
   assert.deepEqual(new Set(question.answers.map(a=>a.profile)),new Set(Object.keys(q.profiles)));
  }
 }
